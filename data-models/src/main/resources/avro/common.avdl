@@ -1,0 +1,64 @@
+/**
+ * Copyright 2013 Brandon Inman
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+@namespace("io.github.brinman2002.data.model")
+protocol CommonProtocol {
+
+  /** 
+   * The namespace indicates the context of the value of the attribute.  This allows compound
+   * attributes to coexist with simpler ones.
+   */
+  enum AttributeNamespace {
+
+    /**
+     * Indicates that the event was associated to the keyword.
+     */
+    KEYWORD,
+
+    /**
+     * Indicates that the event was associated to the keyword and source. The keyword and
+     * source must be encoded into the value.
+     */
+    KEYWORD_AND_SOURCE,
+
+    /**
+     * Indicates that the event was associated to the keyword and author. The keyword and
+     * author must be encoded into the value.
+     */
+    KEYWORD_AND_AUTHOR
+  }
+
+  record Attribute {
+    AttributeNamespace namespace;
+    string value;
+  }
+
+  record Outcome {
+    /**
+     * Primary value of the outcome.
+     */
+    string value;
+
+    /**
+     * Namespace for the value. Namespacing is not optional but is defaulted, and is used when there is a need to separate outcomes with conflicting values.
+     */
+    string namespace = "default"; 
+
+    /**
+     * Qualifier, similar to namespace, further defines the value of the outcome.  Generally, namespace is considered to be a higher level grouping less specific than the value, and the qualifier is a lower level subvalue used to further define the value. Qualifiers are optional. 
+     */
+    union {null, string} qualifier = null;
+  }
+}
