@@ -95,11 +95,11 @@ public class NaiveBayesianClassifier {
         final long totalOutcomeCount = outcomes.length().getValue();
         final PTable<Outcome, Long> countedOutcomes = PTables.values(outcomes).count();
 
-        final PTable<Outcome, Double> attributeProbabilities = countedOutcomes.parallelDo(new ProbabilityCalculatingDoFn<Outcome>(totalOutcomeCount),
+        final PTable<Outcome, Double> outcomeProbabilities = countedOutcomes.parallelDo(new ProbabilityCalculatingDoFn<Outcome>(totalOutcomeCount),
                 Avros.tableOf(Avros.containers(Outcome.class), Avros.doubles()));
 
         final Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Outcome, Double>> output = Pair.of(outcomeAttributeProbabilities,
-                attributeProbabilities);
+                outcomeProbabilities);
         return output;
     }
 

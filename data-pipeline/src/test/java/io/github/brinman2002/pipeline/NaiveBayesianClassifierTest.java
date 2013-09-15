@@ -17,6 +17,8 @@ package io.github.brinman2002.pipeline;
 
 import static io.github.brinman2002.Helper.attribute;
 import static io.github.brinman2002.Helper.outcome;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import io.github.brinman2002.data.model.Attribute;
 import io.github.brinman2002.data.model.Outcome;
 
@@ -52,6 +54,14 @@ public class NaiveBayesianClassifierTest {
         System.out.println(trained.first());
         System.out.println(trained.second());
         // TODO assert expected values
+
+        final Collection<Pair<Outcome, Double>> outcomeProbabilities = trained.second().asCollection().getValue();
+
+        assertEquals(4, outcomeProbabilities.size());
+        assertTrue(outcomeProbabilities.contains(Pair.of(outcome("a"), Double.valueOf(0.5))));
+        assertTrue(outcomeProbabilities.contains(Pair.of(outcome("b"), Double.valueOf(0.25))));
+        assertTrue(outcomeProbabilities.contains(Pair.of(outcome("c"), Double.valueOf(0.125))));
+        assertTrue(outcomeProbabilities.contains(Pair.of(outcome("d"), Double.valueOf(0.125))));
     }
 
     private Collection<Pair<Long, Outcome>> outcomes() {
@@ -82,13 +92,13 @@ public class NaiveBayesianClassifierTest {
 
         attributes.add(Pair.of(day(4), attribute("d")));
 
-        attributes.add(Pair.of(day(4), attribute("g")));
+        attributes.add(Pair.of(day(5), attribute("g")));
 
-        attributes.add(Pair.of(day(4), attribute("h")));
+        attributes.add(Pair.of(day(6), attribute("h")));
 
-        attributes.add(Pair.of(day(4), attribute("i")));
+        attributes.add(Pair.of(day(7), attribute("i")));
 
-        attributes.add(Pair.of(day(4), attribute("j")));
+        attributes.add(Pair.of(day(8), attribute("j")));
 
         return attributes;
     }
