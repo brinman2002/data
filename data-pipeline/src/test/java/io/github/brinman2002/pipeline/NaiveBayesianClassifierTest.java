@@ -31,32 +31,40 @@ import org.apache.crunch.types.PTableType;
 import org.apache.crunch.types.avro.Avros;
 import org.junit.Test;
 
+/**
+ * Test of the NBC. FIXME this need more extensive tests.
+ * 
+ * @author brandon
+ * 
+ */
 public class NaiveBayesianClassifierTest {
 
     private static final PTableType<Long, Attribute> TABLE_OF_ATTRIBUTES = Avros.tableOf(Avros.longs(), Avros.containers(Attribute.class));
     private static final PTableType<Long, Outcome> TABLE_OF_OUTCOMES = Avros.tableOf(Avros.longs(), Avros.containers(Outcome.class));
-    private static final Long DAY_ONE = 1000L * 60 * 60 * 24;
-    private static final Long DAY_TWO = DAY_ONE * 2;
-    private static final Long DAY_THREE = DAY_ONE * 3;
-    private static final Long DAY_FOUR = DAY_ONE * 4;
+    private static final Long MILLIS_IN_DAY = 1000L * 60 * 60 * 24;
 
     @Test
     public void train() {
         final PTable<Long, Attribute> attributes = MemPipeline.typedTableOf(TABLE_OF_ATTRIBUTES, attributes());
         final PTable<Long, Outcome> outcomes = MemPipeline.typedTableOf(TABLE_OF_OUTCOMES, outcomes());
 
-        final Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Attribute, Double>> trained = NaiveBayesianClassifier.train(attributes, outcomes);
+        final Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Outcome, Double>> trained = NaiveBayesianClassifier.train(attributes, outcomes);
         System.out.println(trained.first());
         System.out.println(trained.second());
+        // TODO assert expected values
     }
 
     private Collection<Pair<Long, Outcome>> outcomes() {
         final List<Pair<Long, Outcome>> outcomes = new ArrayList<Pair<Long, Outcome>>();
 
-        outcomes.add(Pair.of(DAY_ONE, outcome("a")));
-        outcomes.add(Pair.of(DAY_TWO, outcome("b")));
-        outcomes.add(Pair.of(DAY_THREE, outcome("b")));
-        outcomes.add(Pair.of(DAY_FOUR, outcome("a")));
+        outcomes.add(Pair.of(day(1), outcome("a")));
+        outcomes.add(Pair.of(day(2), outcome("b")));
+        outcomes.add(Pair.of(day(3), outcome("b")));
+        outcomes.add(Pair.of(day(4), outcome("a")));
+        outcomes.add(Pair.of(day(5), outcome("a")));
+        outcomes.add(Pair.of(day(6), outcome("a")));
+        outcomes.add(Pair.of(day(7), outcome("c")));
+        outcomes.add(Pair.of(day(8), outcome("d")));
 
         return outcomes;
     }
@@ -64,16 +72,28 @@ public class NaiveBayesianClassifierTest {
     private Collection<Pair<Long, Attribute>> attributes() {
         final List<Pair<Long, Attribute>> attributes = new ArrayList<Pair<Long, Attribute>>();
         // Only one outcome per block is currently permitted.
-        attributes.add(Pair.of(DAY_ONE, attribute("a")));
-        attributes.add(Pair.of(DAY_ONE, attribute("b")));
-        attributes.add(Pair.of(DAY_ONE, attribute("c")));
+        attributes.add(Pair.of(day(1), attribute("a")));
+        attributes.add(Pair.of(day(1), attribute("b")));
+        attributes.add(Pair.of(day(1), attribute("c")));
 
-        attributes.add(Pair.of(DAY_TWO, attribute("b")));
+        attributes.add(Pair.of(day(2), attribute("b")));
 
-        attributes.add(Pair.of(DAY_THREE, attribute("c")));
+        attributes.add(Pair.of(day(3), attribute("c")));
 
-        attributes.add(Pair.of(DAY_FOUR, attribute("d")));
+        attributes.add(Pair.of(day(4), attribute("d")));
+
+        attributes.add(Pair.of(day(4), attribute("g")));
+
+        attributes.add(Pair.of(day(4), attribute("h")));
+
+        attributes.add(Pair.of(day(4), attribute("i")));
+
+        attributes.add(Pair.of(day(4), attribute("j")));
 
         return attributes;
+    }
+
+    private long day(final int i) {
+        return MILLIS_IN_DAY * i;
     }
 }

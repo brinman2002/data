@@ -44,6 +44,6 @@ public class Helper {
      * @return outcome
      */
     public static Outcome outcome(final String i) {
-        return Outcome.newBuilder().setValue("VALUE_" + i).build();
+        return Outcome.newBuilder().setNamespace("test_outcome").setValue("VALUE_" + i).build();
     }
 }

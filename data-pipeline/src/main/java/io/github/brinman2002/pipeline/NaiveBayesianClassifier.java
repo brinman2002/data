@@ -56,9 +56,9 @@ public class NaiveBayesianClassifier {
      *            PTable of attributes.
      * @param outcomes
      *            PTable of outcomes.
-     * @return
+     * @return Training data.
      */
-    public static Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Attribute, Double>> train(final PTable<Long, Attribute> attributes,
+    public static Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Outcome, Double>> train(final PTable<Long, Attribute> attributes,
             final PTable<Long, Outcome> outcomes) {
 
         final PTable<Outcome, Long> outcomeCounts = PTables.values(outcomes).count();
@@ -87,16 +87,18 @@ public class NaiveBayesianClassifier {
                 new AttributeOutcomeProbabilityCalculatingDoFn(),
                 Avros.tableOf(Avros.pairs(Avros.containers(Outcome.class), Avros.containers(Attribute.class)), Avros.doubles()));
 
-        final PTable<Attribute, Long> countedAttributes = PTables.values(attributesAssociatedToOutcome).count();
+        // final PTable<Outcome, Long> countedOutcomes =
+        // PTables.keys(attributesAssociatedToOutcome).count();
 
         // This will trigger the pipeline so far, at least the parts related to
         // that PTable.
         final long totalOutcomeCount = outcomes.length().getValue();
-        // This is a final state that needs recorded.
-        final PTable<Attribute, Double> attributeProbabilities = countedAttributes.parallelDo(new ProbabilityCalculatingDoFn<Attribute>(
-                totalOutcomeCount), Avros.tableOf(Avros.containers(Attribute.class), Avros.doubles()));
+        final PTable<Outcome, Long> countedOutcomes = PTables.values(outcomes).count();
 
-        final Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Attribute, Double>> output = Pair.of(outcomeAttributeProbabilities,
+        final PTable<Outcome, Double> attributeProbabilities = countedOutcomes.parallelDo(new ProbabilityCalculatingDoFn<Outcome>(totalOutcomeCount),
+                Avros.tableOf(Avros.containers(Outcome.class), Avros.doubles()));
+
+        final Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Outcome, Double>> output = Pair.of(outcomeAttributeProbabilities,
                 attributeProbabilities);
         return output;
     }
