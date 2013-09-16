@@ -39,7 +39,7 @@ import org.apache.crunch.Pair;
  * 
  */
 public class AttributeOutcomeProbabilityCalculatingDoFn extends
-        DoFn<Pair<Outcome, Pair<Pair<Attribute, Long>, Long>>, Pair<Pair<Outcome, Attribute>, Double>> {
+        DoFn<Pair<Outcome, Pair<Pair<Attribute, Long>, Long>>, Pair<Attribute, Pair<Outcome, Double>>> {
 
     /**
      * 
@@ -47,12 +47,12 @@ public class AttributeOutcomeProbabilityCalculatingDoFn extends
     private static final long serialVersionUID = -469857876381729475L;
 
     @Override
-    public void process(final Pair<Outcome, Pair<Pair<Attribute, Long>, Long>> input, final Emitter<Pair<Pair<Outcome, Attribute>, Double>> emitter) {
+    public void process(final Pair<Outcome, Pair<Pair<Attribute, Long>, Long>> input, final Emitter<Pair<Attribute, Pair<Outcome, Double>>> emitter) {
         final Outcome outcome = input.first();
         final Attribute attribute = input.second().first().first();
         final long outcomeCount = input.second().second();
         final long attributeCount = input.second().first().second();
 
-        emitter.emit(Pair.of(Pair.of(outcome, attribute), (attributeCount * 1.0) / outcomeCount));
+        emitter.emit(Pair.of(attribute, Pair.of(outcome, (attributeCount * 1.0) / outcomeCount)));
     }
 }

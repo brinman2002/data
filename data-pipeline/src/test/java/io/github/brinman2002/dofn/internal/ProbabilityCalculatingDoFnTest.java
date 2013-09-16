@@ -18,8 +18,6 @@ package io.github.brinman2002.dofn.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import io.github.brinman2002.dofn.internal.ProbabilityCalculatingDoFn;
-
 import java.util.Collection;
 
 import org.apache.crunch.PTable;

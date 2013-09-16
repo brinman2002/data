@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import io.github.brinman2002.data.model.Attribute;
 import io.github.brinman2002.data.model.Outcome;
-import io.github.brinman2002.dofn.internal.RegroupOutcomeAttributeCountDoFn;
 
 import java.util.Collection;
 

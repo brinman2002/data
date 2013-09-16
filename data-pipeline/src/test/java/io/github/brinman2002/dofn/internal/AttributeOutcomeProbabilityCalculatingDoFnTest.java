@@ -21,12 +21,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import io.github.brinman2002.data.model.Attribute;
 import io.github.brinman2002.data.model.Outcome;
-import io.github.brinman2002.dofn.internal.AttributeOutcomeProbabilityCalculatingDoFn;
 
 import java.util.Collection;
 
-import org.apache.crunch.DoFn;
 import org.apache.crunch.PCollection;
+import org.apache.crunch.PTable;
 import org.apache.crunch.Pair;
 import org.apache.crunch.impl.mem.MemPipeline;
 import org.apache.crunch.types.avro.Avros;
@@ -38,23 +37,23 @@ public class AttributeOutcomeProbabilityCalculatingDoFnTest {
     @Test
     public void process() {
 
-        final DoFn<Pair<Outcome, Pair<Pair<Attribute, Long>, Long>>, Pair<Pair<Outcome, Attribute>, Double>> doFn = new AttributeOutcomeProbabilityCalculatingDoFn();
         final PCollection<Pair<Outcome, Pair<Pair<Attribute, Long>, Long>>> pCollection = MemPipeline.collectionOf(
                 testData(outcome("1"), 10, attribute("1"), 5), testData(outcome("1"), 10, attribute("2"), 8),
                 testData(outcome("1"), 10, attribute("3"), 1), testData(outcome("2"), 20, attribute("1"), 10));
 
-        final PCollection<Pair<Pair<Outcome, Attribute>, Double>> pCollection2 = pCollection.parallelDo(doFn,
-                Avros.pairs(Avros.pairs(Avros.containers(Outcome.class), Avros.containers(Attribute.class)), Avros.doubles()));
+        final PTable<Attribute, Pair<Outcome, Double>> pCollection2 = pCollection.parallelDo(new AttributeOutcomeProbabilityCalculatingDoFn(),
+                Avros.tableOf(Avros.containers(Attribute.class), Avros.pairs(Avros.containers(Outcome.class), Avros.doubles())));
 
-        final Collection<Pair<Pair<Outcome, Attribute>, Double>> collection = pCollection2.asCollection().getValue();
+        final Collection<Pair<Attribute, Pair<Outcome, Double>>> collection = pCollection2.asCollection().getValue();
 
         assertEquals(4, collection.size());
         // As with elsewhere, asserting doubles is problematic but we'll do it
         // as long as it works.
-        assertTrue(collection.contains(Pair.of(Pair.of(outcome("1"), attribute("1")), 0.5)));
-        assertTrue(collection.contains(Pair.of(Pair.of(outcome("1"), attribute("2")), 0.8)));
-        assertTrue(collection.contains(Pair.of(Pair.of(outcome("1"), attribute("3")), 0.1)));
-        assertTrue(collection.contains(Pair.of(Pair.of(outcome("2"), attribute("1")), 0.5)));
+        assertTrue(collection.contains(Pair.of(attribute("1"), Pair.of(outcome("1"), 0.5))));
+        assertTrue(collection.contains(Pair.of(attribute("2"), Pair.of(outcome("1"), 0.8))));
+        assertTrue(collection.contains(Pair.of(attribute("3"), Pair.of(outcome("1"), 0.1))));
+        assertTrue(collection.contains(Pair.of(attribute("1"), Pair.of(outcome("2"), 0.5))));
+
     }
 
     /**

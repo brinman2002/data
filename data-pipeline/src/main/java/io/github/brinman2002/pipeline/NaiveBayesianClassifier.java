@@ -58,7 +58,7 @@ public class NaiveBayesianClassifier {
      *            PTable of outcomes.
      * @return Training data.
      */
-    public static Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Outcome, Double>> train(final PTable<Long, Attribute> attributes,
+    public static Pair<PTable<Attribute, Pair<Outcome, Double>>, PTable<Outcome, Double>> train(final PTable<Long, Attribute> attributes,
             final PTable<Long, Outcome> outcomes) {
 
         final PTable<Outcome, Long> outcomeCounts = PTables.values(outcomes).count();
@@ -83,12 +83,9 @@ public class NaiveBayesianClassifier {
         final PTable<Outcome, Pair<Pair<Attribute, Long>, Long>> joinedAttributeAndEventCounts = Join
                 .innerJoin(attributeCountsByEvent, outcomeCounts);
 
-        final PTable<Pair<Outcome, Attribute>, Double> outcomeAttributeProbabilities = joinedAttributeAndEventCounts.parallelDo(
+        final PTable<Attribute, Pair<Outcome, Double>> outcomeAttributeProbabilities = joinedAttributeAndEventCounts.parallelDo(
                 new AttributeOutcomeProbabilityCalculatingDoFn(),
-                Avros.tableOf(Avros.pairs(Avros.containers(Outcome.class), Avros.containers(Attribute.class)), Avros.doubles()));
-
-        // final PTable<Outcome, Long> countedOutcomes =
-        // PTables.keys(attributesAssociatedToOutcome).count();
+                Avros.tableOf(Avros.containers(Attribute.class), Avros.pairs(Avros.containers(Outcome.class), Avros.doubles())));
 
         // This will trigger the pipeline so far, at least the parts related to
         // that PTable.
@@ -98,7 +95,7 @@ public class NaiveBayesianClassifier {
         final PTable<Outcome, Double> outcomeProbabilities = countedOutcomes.parallelDo(new ProbabilityCalculatingDoFn<Outcome>(totalOutcomeCount),
                 Avros.tableOf(Avros.containers(Outcome.class), Avros.doubles()));
 
-        final Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Outcome, Double>> output = Pair.of(outcomeAttributeProbabilities,
+        final Pair<PTable<Attribute, Pair<Outcome, Double>>, PTable<Outcome, Double>> output = Pair.of(outcomeAttributeProbabilities,
                 outcomeProbabilities);
         return output;
     }
@@ -110,23 +107,23 @@ public class NaiveBayesianClassifier {
      * @param trainingResults
      * @return Predicted classification.
      */
-    public Object predict(final Pair<PTable<Pair<Outcome, Attribute>, Double>, PTable<Attribute, Double>> trainingResults,
+    public Object predict_nonMR(Pair<PTable<Attribute, Pair<Outcome, Double>>, PTable<Outcome, Double>> trainingResults,
             final PCollection<Attribute> observedAttributes) {
-        return predict(trainingResults.first(), trainingResults.second(), observedAttributes);
+        return predict_nonMR(trainingResults.first(), trainingResults.second(), observedAttributes);
     }
 
     /**
      * Perform prediction based on the training results and a set of attributes.
      * 
-     * @param outcomeAttributeProbabilities
+     * @param attributeOutcomeProbabilities
      *            Probability of an attribute occurring given an outcome.
      * @param attributeProbabilities
      *            Probability of attribute occurring, independent of outcome.
      * @return Predicted classification.
      */
-    public Object predict(final PTable<Pair<Outcome, Attribute>, Double> outcomeAttributeProbabilities,
-            final PTable<Attribute, Double> attributeProbabilities, final PCollection<Attribute> observedAttributes) {
-        // TODO not yet implemented
+    public Object predict_nonMR(final PTable<Attribute, Pair<Outcome, Double>> attributeOutcomeProbabilities,
+            final PTable<Outcome, Double> attributeProbabilities, final PCollection<Attribute> observedAttributes) {
+
         return null;
     }
 }
