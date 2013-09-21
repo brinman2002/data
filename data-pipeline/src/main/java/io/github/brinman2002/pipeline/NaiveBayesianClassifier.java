@@ -20,8 +20,17 @@ import io.github.brinman2002.data.model.Outcome;
 import io.github.brinman2002.dofn.internal.AttributeOutcomeProbabilityCalculatingDoFn;
 import io.github.brinman2002.dofn.internal.ProbabilityCalculatingDoFn;
 import io.github.brinman2002.dofn.internal.RegroupOutcomeAttributeCountDoFn;
+import io.github.brinman2002.filter.AttributeFilterFn;
 
-import org.apache.crunch.PCollection;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 import org.apache.crunch.PTable;
 import org.apache.crunch.Pair;
 import org.apache.crunch.lib.Distinct;
@@ -30,7 +39,9 @@ import org.apache.crunch.lib.PTables;
 import org.apache.crunch.types.avro.Avros;
 
 /**
- * Utility class providing methods to perform Naive Bayesian Classification.
+ * Utility class providing methods to perform Naive Bayesian Classification. The
+ * implementations of the class make the assumption that the number of possible
+ * outcomes will be relatively small.
  * 
  * @author brandon
  * 
@@ -107,23 +118,72 @@ public class NaiveBayesianClassifier {
      * @param trainingResults
      * @return Predicted classification.
      */
-    public Object predict_nonMR(Pair<PTable<Attribute, Pair<Outcome, Double>>, PTable<Outcome, Double>> trainingResults,
-            final PCollection<Attribute> observedAttributes) {
-        return predict_nonMR(trainingResults.first(), trainingResults.second(), observedAttributes);
+    public static Map<Outcome, Double> predict(final Pair<PTable<Attribute, Pair<Outcome, Double>>, PTable<Outcome, Double>> trainingResults,
+            final Collection<Attribute> observedAttributes) {
+        return predict(trainingResults.first(), trainingResults.second(), observedAttributes);
     }
 
     /**
      * Perform prediction based on the training results and a set of attributes.
+     * This method uses a FilterFn to scope down the data, but otherwise makes
+     * the assumption that the final data is reasonably sized to be able to do
+     * the prediction in-memory.
      * 
      * @param attributeOutcomeProbabilities
      *            Probability of an attribute occurring given an outcome.
-     * @param attributeProbabilities
+     * @param outcomeProbabilities
      *            Probability of attribute occurring, independent of outcome.
      * @return Predicted classification.
      */
-    public Object predict_nonMR(final PTable<Attribute, Pair<Outcome, Double>> attributeOutcomeProbabilities,
-            final PTable<Outcome, Double> attributeProbabilities, final PCollection<Attribute> observedAttributes) {
+    public static Map<Outcome, Double> predict(final PTable<Attribute, Pair<Outcome, Double>> attributeOutcomeProbabilities,
+            final PTable<Outcome, Double> outcomeProbabilities, final Collection<Attribute> observedAttributes) {
+        // FIXME this is a pretty roughed out implementation to get us started;
+        // will optimize if performance warrants it.
+        final PTable<Attribute, Pair<Outcome, Double>> filteredAOP = attributeOutcomeProbabilities.filter(AttributeFilterFn.by(observedAttributes));
+        final Map<Attribute, Pair<Outcome, Double>> attributeMap = filteredAOP.materializeToMap();
+        final Map<Outcome, Double> outcomeMap = outcomeProbabilities.materializeToMap();
 
-        return null;
+        final TreeMap<Outcome, Double> probabilityTable = new TreeMap<Outcome, Double>();
+        for (final Pair<Outcome, Double> pair : attributeMap.values()) {
+            final Double current = probabilityTable.get(pair.first());
+            if (current == null) {
+                probabilityTable.put(pair.first(), pair.second());
+            } else {
+                probabilityTable.put(pair.first(), pair.second() * current);
+            }
+        }
+
+        for (final Map.Entry<Outcome, Double> entry : outcomeMap.entrySet()) {
+            final Outcome key = entry.getKey();
+            if (probabilityTable.containsKey(key)) {
+                final double newValue = probabilityTable.get(key) * entry.getValue();
+                probabilityTable.put(key, newValue);
+            }
+
+        }
+        return probabilityTable;
+    }
+
+    public static List<String> toCsv(final Map<Outcome, Double> data, final boolean header) {
+        final List<String> out = new LinkedList<String>();
+        if (header) {
+            out.add("OUTCOME_NAMESPACE,OUTCOME,OUTCOME_QUALIFIER,PROBABILITY");
+        }
+
+        // Sort in reverse order of the probability
+
+        final TreeSet<Entry<Outcome, Double>> entrySet = new TreeSet<Entry<Outcome, Double>>(new Comparator<Entry<Outcome, Double>>() {
+            @Override
+            public int compare(Entry<Outcome, Double> o1, Entry<Outcome, Double> o2) {
+                return o2.getValue().compareTo(o1.getValue());
+            }
+        });
+        entrySet.addAll(data.entrySet());
+
+        for (final Entry<Outcome, Double> entry : entrySet) {
+            final Outcome outcome = entry.getKey();
+            out.add(String.format("%s,%s,%s,%s", outcome.getNamespace(), outcome.getValue(), outcome.getQualifier(), entry.getValue()));
+        }
+        return out;
     }
 }
