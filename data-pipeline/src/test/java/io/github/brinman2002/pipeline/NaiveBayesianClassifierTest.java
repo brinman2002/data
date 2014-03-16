@@ -54,7 +54,7 @@ public class NaiveBayesianClassifierTest {
         final PTable<Long, Outcome> outcomes = MemPipeline.typedTableOf(TABLE_OF_OUTCOMES, outcomes());
 
         final Pair<PTable<Attribute, Pair<Outcome, Double>>, PTable<Outcome, Double>> trained = NaiveBayesianClassifier.train(attributes, outcomes);
-        // System.out.println(trained.first());
+        System.out.println(trained.first());
         // System.out.println(trained.second());
         // TODO assert expected values
 

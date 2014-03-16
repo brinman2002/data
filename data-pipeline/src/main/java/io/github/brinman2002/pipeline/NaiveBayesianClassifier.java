@@ -59,6 +59,11 @@ public class NaiveBayesianClassifier {
      * key will have identical attribute sets.
      * 
      * <p>
+     * This implementation, at least currently, has one quirk over a normal NBC,
+     * in that an attribute that never with an outcome does not produce a
+     * pairing with a zero probability; the pairing simply isn't emitted at any
+     * point.
+     * <p>
      * 
      * Calling this method will, at least partially, invoke the pipeline to
      * begin processing.
@@ -128,6 +133,9 @@ public class NaiveBayesianClassifier {
      * This method uses a FilterFn to scope down the data, but otherwise makes
      * the assumption that the final data is reasonably sized to be able to do
      * the prediction in-memory.
+     * <p>
+     * This implementation, at least currently, does not account for the zero
+     * probability quirk documented in {@link #train(PTable, PTable)}.
      * 
      * @param attributeOutcomeProbabilities
      *            Probability of an attribute occurring given an outcome.
